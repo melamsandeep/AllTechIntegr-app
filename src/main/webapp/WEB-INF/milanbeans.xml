@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:context="http://www.springframework.org/schema/context"
+ xmlns:p="http://www.springframework.org/schema/p" 
+ xmlns:tx="http://www.springframework.org/schema/tx"
+ xmlns:mvc="http://www.springframework.org/schema/mvc" 
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-4.0.xsd
+http://www.springframework.org/schema/tx 
+http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+http://www.springframework.org/schema/mvc
+http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<mvc:annotation-driven/>
+ <context:component-scan base-package="com.integrationPrj" />
+ 
+ <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+      <property name="prefix" value="/" />
+      <property name="suffix" value=".jsp" />
+   </bean>
+ <context:annotation-config />
+ 
+ 	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+
+		<property name="location">
+			<value>classpath:DB.properties</value>
+		</property>
+	</bean>
+	
+	<bean id="customerDao" 
+		class="com.integrationPrj.DAO.CustomerJDBCImp">         
+		<property name="driverName" value="${app.driverName}"></property>
+		<property name="dbName" value="${app.databaseName}"></property>
+		<property name="userName" value="${app.userName}"></property>
+		<property name="password" value="${app.password}"></property>	
+	</bean>  	
+
+<bean id="ds" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+<property name="driverClassName" value="${app.driverName}" />
+<property name="url" value="${app.databaseName}" />
+<property name="username" value="${app.userName}" />
+<property name="password" value="${app.password}" />
+</bean>
+
+<bean id="jtemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+<constructor-arg ref="ds"></constructor-arg>
+</bean>
+<bean id="hibernate4AnnotatedSessionFactory"
+        class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="ds" />
+        <property name="annotatedClasses">
+            <list>
+                <value>com.integrationPrj.DAO.Customer</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.current_session_context_class">thread</prop>
+                <prop key="hibernate.show_sql">false</prop>
+            </props>
+        </property>
+    </bean>
+    
+   <bean id="jpaDialect" class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />
+
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+	<!-- 	 <property name="persistenceUnitName" value="jcgPersistence" /> --> 
+		<property name="dataSource" ref="ds" />
+	<!-- 	 <property name="persistenceXmlLocation" value="WEB-INF/persistence.xml" /> -->
+	 <!-- The below packagesToScan property makes WEB-INF/persistence.xml is no longer necessary -->
+		 <property name="packagesToScan" value="com.integrationPrj.DAO" />
+		<property name="jpaVendorAdapter" ref="jpaVendorAdapter" />
+ 		<property name="jpaDialect" ref="jpaDialect" /> 
+		<property name="jpaProperties">
+         <props>
+            <prop key="hibernate.hbm2ddl.auto">validate</prop>
+            <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+         </props>
+      </property>
+	</bean>
+
+	<bean id="jpaVendorAdapter"
+		class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+	</bean>
+	
+	<bean id="txManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	 <!--	<property name="dataSource" ref="ds" />
+		<property name="jpaDialect" ref="jpaDialect" /> -->
+	</bean>
+
+	 <tx:annotation-driven transaction-manager="txManager" /> 
+    
+     <!--  <bean id="customerDAOHibernateImpl" class="com.integrationPrj.HibernateImp.CustomerDAOHibernateImpl">
+        <property name="sessionFactory" ref="hibernate4AnnotatedSessionFactory" />
+    </bean> -->
+
+</beans>
